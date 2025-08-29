@@ -220,7 +220,7 @@
     // v10：在 v9（無公杯＋抽卡不再跳人）的基礎上，加入「遊戲卡池」並放大翻卡字體
     const DEFAULT = { tiles:[
       { t:'START', type: 'start', desc: '因此地不准停留，請喝完場上的公杯' },
-      { t:'我獨自喝酒', type: 'normal', desc: '自豪地喝 1 杯' },
+      { t:'獨自喝酒', type: 'normal', desc: '自豪地喝 1 杯' },
       { t:'機會', type: 'chance', desc: '電腦隨機抽一張機會牌' },
       { t:'敦親睦鄰', type: 'normal', desc: '和左右兩位玩家猜拳，最輸的喝 1 杯' },
       { t:'遊戲時間',type:'game',desc:'抽 1 張「遊戲卡」來玩本回合小遊戲'},
@@ -233,7 +233,7 @@
       { t:'機會',type:'chance', desc: '電腦隨機抽一張機會牌'},
       { t:'遊戲時間',type:'game',desc:'抽 1 張「遊戲卡」來玩本回合小遊戲'},
       { t:'敦親睦鄰', type: 'normal', desc: '和左右兩位玩家猜拳，最輸的喝 1 杯' },
-      { t:'SHOT 公杯',type:'danger',desc:'乾掉公杯'},
+      { t:'SHOT公杯',type:'danger',desc:'乾掉公杯'},
       { t:'遊戲時間',type:'game',desc:'抽 1 張「遊戲卡」來玩本回合小遊戲'}, 
       { t:'命運',type:'destiny', desc: '電腦隨機抽一張命運牌'},
       { t:'決鬥',type:'normal',desc:'找 1 位冤家債主猜拳，輸的喝 1 杯'},
@@ -244,7 +244,7 @@
       { t:'命運',type:'destiny', desc: '電腦隨機抽一張命運牌'},
       { t:'機會',type:'chance', desc: '電腦隨機抽一張機會牌'},
       { t:'遊戲時間',type:'game',desc:'抽 1 張「遊戲卡」來玩本回合小遊戲'},
-      { t:'SHOT 公杯',type:'danger',desc:'乾掉公杯'},
+      { t:'SHOT公杯',type:'danger',desc:'乾掉公杯'},
       { t:'制裁',type:'normal',desc:'除了自己以外，場上的每 1 位玩家都要喝 1 杯'},
       { t:'小姐倒酒', type: 'shot', desc: '加入任意 1 項酒或飲料於公杯中'}
     ], chance:[
@@ -465,7 +465,7 @@
     $('#btnReset').onclick=()=>{ if(confirm('確定要重新開始嗎？')) location.reload(); };
     $('#btnHow').onclick=()=>{ alert('玩法速覽\n\n1) 新增 2~20 位玩家\n2) 可用「檢視/編輯」調整所有格子與卡牌（含「遊戲卡」）\n3) 擲骰在右下角浮動區；停格會彈出翻卡顯示規則\n4) 勾選「自動換人」可自動輪到下一位；未勾選時需按「結束回合」，系統會鎖住擲骰避免連續走兩輪\n5) 可用「導出/載入存檔」保存進度\n6) 出發後若再次走到「START」，需喝完當前公杯\n7) 本遊戲開始後，不許有玩家擅自離席去廁所；若逼不得已，請自罰 2 杯後即可申請去廁所\n\n提示：停到「遊戲時間」時會從「遊戲卡池」抽一張卡，本回合就玩那個遊戲！'); };
 
-    function init(){ buildBoard(); $('#chancePeek').textContent=`${DEFAULT.chance.length} 張（洗牌後抽取）`; $('#destinyPeek').textContent=`${DEFAULT.destiny.length} 張（洗牌後抽取）`; $('#gamePeek').textContent=`${DEFAULT.game.length} 張（洗牌後抽取）`; refreshTurnInfo(); updateControls(); log('v10：放大翻卡字體＋加入「遊戲卡池」'); }
+    function init(){ buildBoard(); $('#chancePeek').textContent=`${DEFAULT.chance.length} 張（洗牌後抽取）`; $('#destinyPeek').textContent=`${DEFAULT.destiny.length} 張（洗牌後抽取）`; $('#gamePeek').textContent=`${DEFAULT.game.length} 張（洗牌後抽取）`; refreshTurnInfo(); updateControls(); log('啟動遊戲'); }
     init();
   </script>
 </body>
