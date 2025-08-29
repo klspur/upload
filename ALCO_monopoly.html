@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>酒精大富翁</title>
+  <title>酒精大富翁 — v10</title>
   <style>
     :root { --bg:#0f1116;--panel:#151a22;--tile:#1c2330;--text:#e6f0ff;--muted:#a9b6cc;--accent:#8ac6ff;
       --c-start:#F6C549; --b-start:#7a5a00; --g-start:linear-gradient(180deg,#6b4c00,#2a2209);
@@ -21,7 +21,6 @@
     .btn{background:#203049;border:1px solid #2e4161;color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn:disabled{opacity:.5;cursor:not-allowed}
 
-    /* 三欄佈局，讓棋盤最大化顯示 */
     .grid{display:grid;grid-template-columns:320px 1fr 320px;grid-template-rows:1fr;gap:10px;min-height:0}
     .pane{background:var(--panel);border-radius:12px;padding:10px;overflow:auto;min-height:0}
     .title{font-size:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
@@ -33,7 +32,6 @@
     .meter{background:#0b1220;border-radius:8px;border:1px solid #2b3952;height:8px;width:120px;position:relative;overflow:hidden}
     .meter span{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#77c6ff,#b282ff)}
 
-    /* 棋盤 */
     .board-wrap{position:relative;display:grid;place-items:center;height:100%}
     .board{--N:8;width:min(94vh,calc(100% - 24px));aspect-ratio:1/1;display:grid;grid-template-columns:repeat(var(--N),1fr);grid-template-rows:repeat(var(--N),1fr);gap:6px;background:#0c1220;padding:6px;border-radius:18px;border:1px solid #2b3750;box-shadow:inset 0 0 60px rgba(0,0,0,.35)}
     .ghost{border:1px dashed rgba(255,255,255,.06);border-radius:12px}
@@ -55,8 +53,6 @@
     .tile.danger:after{content:"";position:absolute;inset:auto 6px 6px 6px;height:4px;background:var(--c-danger);border-radius:4px}
 
     .center{display:grid;place-items:center;overflow:auto}
-
-    /* 中央展示改為品牌字樣 */
     .table{position:absolute;inset:16% 16%;border-radius:18px;border:1px dashed #33425e;display:grid;place-items:center;padding:10px;color:var(--muted)}
     .brandmark{font-weight:900;font-size:28px;letter-spacing:2px}
     .slogan{font-size:12px;color:var(--muted);margin-top:6px}
@@ -64,7 +60,6 @@
     .pawn{position:absolute;width:20px;height:20px;border-radius:999px;border:3px solid #fff;box-sizing:content-box;transform:translate(-50%,-50%);transition:transform .3s ease;z-index:10}
     .active{outline:2px solid var(--accent);box-shadow:0 0 0 4px rgba(138,198,255,.15)}
 
-    /* 右下角浮動控制區 */
     .hud{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:60}
     .hud .panel{display:grid;gap:8px;background:rgba(18,26,42,.85);backdrop-filter:blur(6px);border:1px solid #354765;border-radius:14px;padding:10px}
     .hud .row{display:flex;gap:8px;align-items:center}
@@ -74,7 +69,6 @@
     .dice.spin{animation:spin .7s ease-in-out infinite}
     @keyframes spin{0%{transform:rotate(0)}50%{transform:rotate(15deg)}100%{transform:rotate(-15deg)}}
 
-    /* Modal、翻卡 */
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
     .box{width:min(720px,96vw);max-height:90vh;overflow:auto;background:#121a2a;border:1px solid #354765;border-radius:14px;padding:14px}
     .tbl{width:100%;border-collapse:collapse}
@@ -85,12 +79,16 @@
     .flip.flipped .flip-inner{transform:rotateY(180deg)}
     .face{position:absolute;inset:0;padding:14px;border-radius:12px;border:1px solid #2e4161;background:#0f1624;backface-visibility:hidden}
     .back{transform:rotateY(180deg)}
+
+    /* 放大翻卡字體 */
+    #tileDesc{font-size:18px;line-height:1.7}
+    #cardText{font-size:22px;line-height:1.6}
   </style>
 </head>
 <body>
   <div class="app">
     <div class="top">
-      <div class="brand">🍻 酒精大富翁</div>
+      <div class="brand">🍻 酒精大富翁 · v10</div>
       <div class="row">
         <button class="btn" id="btnEditor">檢視 / 編輯 事件與卡牌</button>
         <button class="btn" id="btnSaveCfg">導出設定</button>
@@ -116,7 +114,7 @@
           <div class="board" id="board"></div>
           <div class="table">
             <div class="brandmark">酒精大富翁</div>
-            <div class="slogan">by Shogen</div>
+            <div class="slogan">請理性飲酒 · 遊戲愉快</div>
           </div>
         </div>
       </div>
@@ -126,12 +124,12 @@
         <div class="list">
           <div class="card"><div class="title">目前玩家</div><div>名稱：<b id="turnName">—</b> · 位置 <span id="turnPos">0</span></div></div>
           <div class="card"><div class="title">卡牌區</div><div>Chance：<span id="chancePeek"></span> · Destiny：<span id="destinyPeek"></span></div></div>
+          <div class="card"><div class="title">遊戲卡池</div><div>Games：<span id="gamePeek"></span></div></div>
           <div class="card"><div class="title">事件紀錄</div><div class="log" id="log" style="max-height:40vh;overflow:auto;display:grid;gap:8px"></div></div>
         </div>
       </div>
     </div>
 
-    <!-- 右下角浮動控制區（骰子 / 按鈕 / 自動換人 / 存讀檔） -->
     <div class="hud">
       <div class="panel">
         <div class="row"><div class="dice" id="dice">–</div><button class="btn" id="roll">擲骰</button><button class="btn" id="endTurn">結束回合</button><button class="btn" id="undoBtn">回上一步</button></div>
@@ -164,6 +162,7 @@
       <div class="row" style="gap:10px">
         <div class="card" style="flex:1"><div class="title">機會（Chance）</div><div class="list" id="chanceList"></div><div class="row"><button class="btn" id="addChance">新增機會卡</button></div></div>
         <div class="card" style="flex:1"><div class="title">命運（Destiny）</div><div class="list" id="destinyList"></div><div class="row"><button class="btn" id="addDestiny">新增命運卡</button></div></div>
+        <div class="card" style="flex:1"><div class="title">遊戲卡（Games）</div><div class="list" id="gameList"></div><div class="row"><button class="btn" id="addGame">新增遊戲卡</button></div></div>
       </div>
       <div class="card"><div class="title">設定匯入 / 匯出</div><div class="row"><button class="btn" id="btnExportCfg2">導出 JSON</button><input type="file" id="importCfg2" hidden accept="application/json"><button class="btn" id="btnImportCfg2">載入 JSON</button></div></div>
     </div>
@@ -184,7 +183,7 @@
           </div>
           <div class="face back">
             <div class="title">規則內容</div>
-            <div id="tileDesc" style="white-space:pre-wrap;line-height:1.5"></div>
+            <div id="tileDesc" style="white-space:pre-wrap;"></div>
             <div class="row" style="margin-top:12px;justify-content:end"><button class="btn" id="btnTileOk">了解，執行</button></div>
           </div>
         </div>
@@ -192,7 +191,7 @@
     </div>
   </div>
 
-  <!-- 抽卡（機會/命運）Modal -->
+  <!-- 抽卡（機會/命運/遊戲）Modal -->
   <div class="modal" id="modalCard">
     <div class="box">
       <div class="flip" id="flipCard">
@@ -218,50 +217,76 @@
     const el = (t,c,h)=>{const e=document.createElement(t); if(c) e.className=c; if(h!==undefined) e.innerHTML=h; return e};
     const sample = arr => arr[Math.floor(Math.random()*arr.length)];
 
-    // === 預設資料（已移除公杯相關計算邏輯） ===
+    // v10：在 v9（無公杯＋抽卡不再跳人）的基礎上，加入「遊戲卡池」並放大翻卡字體
     const DEFAULT = { tiles:[
-      { t:'START', type: 'start', desc: '出發！經過終點喝一杯，停留在終點喝完公杯' },
+      { t:'START', type: 'start', desc: '因此地不准停留，請喝完場上的公杯' },
       { t:'我獨自喝酒', type: 'normal', desc: '自豪地喝 1 杯' },
       { t:'機會', type: 'chance', desc: '電腦隨機抽一張機會牌' },
-      { t:'友善鄰居', type: 'normal', desc: '和左右兩位玩家猜拳，最輸的喝 1 杯' },
-      { t:'遊戲時間', type: 'normal', desc: '菜園果園動物園(可自行決定題目)' },
+      { t:'敦親睦鄰', type: 'normal', desc: '和左右兩位玩家猜拳，最輸的喝 1 杯' },
+      { t:'遊戲時間',type:'game',desc:'抽 1 張「遊戲卡」來玩本回合小遊戲'},
       { t:'命運', type: 'destiny', desc: '電腦隨機抽一張命運牌'},
-      { t:'小姐請倒酒', type: 'shot', desc: '加任意 1 項酒或飲料於公杯中' },
-      { t:'微醺小憩',type:'beer', desc:'什麼事都沒發生，停留在此格間可以獲得上廁所的機會'},
-      { t:'友善鄰居', type: 'normal', desc: '和左右兩位玩家猜拳，最輸的喝 1 杯' },
+      { t:'小姐倒酒', type: 'shot', desc: '加入任意 1 項酒或飲料於公杯中' },
+      { t:'微醺小憩',type:'beer', desc:'停留在此格間可以獲得上廁所的機會'},
+      { t:'決鬥',type:'normal',desc:'找 1 位冤家債主猜拳，輸的喝 1 杯'},
       { t:'命運',type:'destiny', desc: '電腦隨機抽一張命運牌'},
-      { t:'小姐請倒酒', type: 'shot', desc: '加任意 1 項酒或飲料於公杯中' },
+      { t:'小姐倒酒', type: 'shot', desc: '加入任意 1 項酒或飲料於公杯中' },
       { t:'機會',type:'chance', desc: '電腦隨機抽一張機會牌'},
-      { t:'遊戲時間', type: 'normal', desc: '3*3射龍門' },
-      { t:'Happy Hour',type:'normal',desc:'自己少喝 1 杯'},
+      { t:'遊戲時間',type:'game',desc:'抽 1 張「遊戲卡」來玩本回合小遊戲'},
+      { t:'敦親睦鄰', type: 'normal', desc: '和左右兩位玩家猜拳，最輸的喝 1 杯' },
       { t:'SHOT 公杯',type:'danger',desc:'乾掉公杯'},
-      { t:'遊戲時間', type: 'normal', desc: '我從來沒有：玩家說出：「我從來有/沒有xxx」，與玩家描述事實相反者喝 1 杯 ' }, 
+      { t:'遊戲時間',type:'game',desc:'抽 1 張「遊戲卡」來玩本回合小遊戲'}, 
       { t:'命運',type:'destiny', desc: '電腦隨機抽一張命運牌'},
-      { t:'交換位置',type:'normal',desc:'指定一玩家與其交換位置，交換後兩方均不執行事件'},
+      { t:'決鬥',type:'normal',desc:'找 1 位冤家債主猜拳，輸的喝 1 杯'},
       { t:'指定喝酒',type:'normal',desc:'指定 1 人喝 2 杯'},
       { t:'機會',type:'chance', desc: '電腦隨機抽一張機會牌'},
-      { t:'小姐請倒酒', type: 'shot', desc: '加任意 1 項酒或飲料於公杯中' },
-      { t:'微醺小憩',type:'beer',desc:'什麼事都沒發生，停留在此格間可以獲得上廁所的機會'},
+      { t:'小姐倒酒', type: 'shot', desc: '加入任意 1 項酒或飲料於公杯中' },
+      { t:'微醺小憩',type:'beer',desc:'停留在此格間可以獲得上廁所的機會'},
       { t:'命運',type:'destiny', desc: '電腦隨機抽一張命運牌'},
       { t:'機會',type:'chance', desc: '電腦隨機抽一張機會牌'},
-      { t:'我最棒',type:'normal',desc:'自豪地喝 1 杯'},
+      { t:'遊戲時間',type:'game',desc:'抽 1 張「遊戲卡」來玩本回合小遊戲'},
       { t:'SHOT 公杯',type:'danger',desc:'乾掉公杯'},
-      { t:'幸運乾杯',type:'normal',desc:'指定 1 人喝 1 杯，自己免喝'},
-      { t:'小姐請倒酒', type: 'shot', desc: '加任意 1 項酒或飲料於公杯中' }
+      { t:'制裁',type:'normal',desc:'除了自己以外，場上的每 1 位玩家都要喝 1 杯'},
+      { t:'小姐倒酒', type: 'shot', desc: '加入任意 1 項酒或飲料於公杯中'}
     ], chance:[
-      {text:'+2 前進',code:'move(2)'},
-      {text:'-2 後退',code:'move(-2)'},
-      {text:'大家乾杯，每位玩家一起喝一杯',code:''},
-      {text:'指定兩位玩家各喝 1 杯',code:''}
+      {text:'大家乾杯，所有玩家一起喝 1 杯',code:''},
+      {text:'指定 2 位玩家各喝 1 杯',code:''},
+      {text:'恭喜獲得上廁所的機會（只有當前回合可以使用）',code:''},
+      {text:'從現在開始，你只能使用「臺語」進行溝通，直到你再次經過「START」。若說出非台語以外的語言則處罰喝 1 杯酒，說 1 次喝 1 杯，依此計算',code:''},
+      {text:'從現在開始，你只能使用「英文」進行溝通，直到你再次經過「START」。若說出非台語以外的語言則處罰喝 1 杯酒，說 1 次喝 1 杯，依此計算',code:''},
+      {text:'抽牌：撲克牌抽到幾就喝幾杯（西裝牌為 Pass）',code:''},
+      {text:'進入戒酒勒戒所，暫停一回合',code:'player.skip=true'},
+      {text:'陪酒小姐：當場上任 1 玩家喝酒，你也必須陪該玩家一起喝，直到你再次經過「START」。（若有玩家喝到公杯則可以不必陪喝）',code:''},
+      {text:'小姐倒酒：加入任意 1 項酒或飲料於公杯中',code:''},
+      {text:'我是大慈善家：請喝掉當前的公杯，大家會感謝你!!',code:''}
     ], destiny:[
-      {text:'回到 START 並觸發該格子條件',code:'player.pos=0; player.sips+=1; refreshPawn()'},
-      {text:'暫停一回合',code:'player.skip=true'},
+      {text:'回到 START 並喝掉公杯',code:'player.pos=0; player.sips+=1; refreshPawn()'},
+      {text:'進入戒酒勒戒所，暫停一回合',code:'player.skip=true'},
       {text:'骰子再擲一次',code:'extraRoll()'},
-      {text:'陪酒小姐。當場上任一玩家喝酒時，你也需要喝相對應的杯數，直到你經過 START 為止',code:'' }
+      {text:'恭喜獲得上廁所的機會（只有當前回合可以使用）',code:''},
+      {text:'從現在開始禁止說出「我」這個字，直到你再次經過「START」。若說出該字處罰喝 1 杯酒，說 1 次喝 1 杯，依此計算',code:''},
+      {text:'從現在開始禁止說出「你」這個字，直到你再次經過「START」。若說出該字處罰喝 1 杯酒，說 1 次喝 1 杯，依此計算',code:''},
+      {text:'從現在開始禁止說出「他」這個字，直到你再次經過「START」。若說出該字處罰喝 1 杯酒，說 1 次喝 1 杯，依此計算',code:''},
+      {text:'在場所有男生喝一杯',code:''},
+      {text:'在場所有女生喝一杯',code:''},
+      {text:'小姐倒酒：加入任意 1 項酒或飲料於公杯中',code:''}
+    ], game:[
+      {text:'真心話大冒險',code:''},
+      {text:'竹筍竹筍蹦蹦出',code:''},
+      {text:'skr 遊戲',code:''},
+      {text:'撲克牌數字比大小：由你先喊出要比大還是比小之後，所有人抽一張撲克牌；若莊家喊比小，則抽出最大張牌的玩家喝 1 杯',code:''},
+      {text:'3*3 射龍門：將 9 張撲克牌放置於桌上，由你開始對桌上 9 堆中任一堆喊出下一張翻開的牌比牌堆的牌面大或小。若喊出與牌面數字大小不符者，有幾張就喝牌數一半的杯數，撞柱則喝牌數的杯數',code:''},
+      {text:'誰是臥底',code:''},
+      {text:'海帶拳 / 佛祖拳 / 烏龜烏龜翹 則一',code:''},
+      {text:'5 10 15 20',code:''},
+      {text:'菜園果園動物園（可自行想主題）',code:''},
+      {text:'我從來沒有：與莊家乘數事實相反的玩家喝 1 杯',code:''},
+      {text:'喊到 3 就拍手',code:''},
+      {text:'電梯上下樓',code:''},
+      {text:'終極密碼：由你設定 0 ~ 100 任一數字，每位玩家依序猜一數字。若無猜中則會限縮範圍後再由下一玩家持續猜，最終猜中數字者則喝 1 杯',code:''}
     ]};
 
     const COLORS=['#4fd1c5','#60a5fa','#a78bfa','#f472b6','#fb7185','#f59e0b','#34d399','#f87171','#22c55e','#93c5fd','#e879f9','#38bdf8'];
-    const state={ players:[], turn:0, chance:[], destiny:[], moving:false, extra:false, anim:false, waitingEnd:false };
+    const state={ players:[], turn:0, chance:[], destiny:[], game:[], moving:false, extra:false, anim:false, waitingEnd:false };
     let cfg=JSON.parse(JSON.stringify(DEFAULT));
 
     const N=8, board=$('#board'); const tileEls=[];
@@ -299,41 +324,122 @@
 
     function nextTurn(){ if(state.players.length===0) return; const p=state.players[state.turn]; const delta=Math.max(0,p.sips+p.buff); if(delta>0) log(`${p.name} 喝掉 ${delta} 口。`); p.totalSips+=Math.max(0,delta); p.sips=0; p.buff=0; state.turn=(state.turn+1)%state.players.length; const n=state.players[state.turn]; if(n&&n.skip){ log(`${n.name} 跳過本回合。`); n.skip=false; state.turn=(state.turn+1)%state.players.length; } state.extra=false; state.waitingEnd=false; refreshTurnInfo(); updateControls(); }
 
-    // Undo（擲骰前存快照）
     const H=[];
-    function pushSnapshot(){ const snap={ turn: state.turn, waitingEnd: state.waitingEnd, chance: JSON.parse(JSON.stringify(state.chance)), destiny: JSON.parse(JSON.stringify(state.destiny)), players: state.players.map(p=>({name:p.name,color:p.color,pos:p.pos,sips:p.sips,totalSips:p.totalSips,skip:p.skip,buff:p.buff})) }; H.push(snap); updateControls(); }
-    function undo(){ if(!H.length) return; const s=H.pop(); state.turn=s.turn; state.waitingEnd=s.waitingEnd; state.chance=s.chance; state.destiny=s.destiny; state.players.forEach((p,i)=>{ const d=s.players[i]; if(!d) return; p.pos=d.pos; p.sips=d.sips; p.totalSips=d.totalSips; p.skip=d.skip; p.buff=d.buff; }); placePawns(); renderPlayers(); refreshTurnInfo(); updateControls(); log('已回復到上一步'); }
+    function pushSnapshot(){ const snap={ turn: state.turn, waitingEnd: state.waitingEnd, chance: JSON.parse(JSON.stringify(state.chance)), destiny: JSON.parse(JSON.stringify(state.destiny)), game: JSON.parse(JSON.stringify(state.game)), players: state.players.map(p=>({name:p.name,color:p.color,pos:p.pos,sips:p.sips,totalSips:p.totalSips,skip:p.skip,buff:p.buff})) }; H.push(snap); updateControls(); }
+    function undo(){ if(!H.length) return; const s=H.pop(); state.turn=s.turn; state.waitingEnd=s.waitingEnd; state.chance=s.chance; state.destiny=s.destiny; state.game=s.game; state.players.forEach((p,i)=>{ const d=s.players[i]; if(!d) return; p.pos=d.pos; p.sips=d.sips; p.totalSips=d.totalSips; p.skip=d.skip; p.buff=d.buff; }); placePawns(); renderPlayers(); refreshTurnInfo(); updateControls(); log('已回復到上一步'); }
 
-    // 擲骰（含動畫）＋ 防呆 / 自動換人
-    function roll(){ if(state.players.length===0) return alert('請先加入玩家'); if(state.anim||state.moving) return; if(state.waitingEnd){ alert('請先按「結束回合」，再由下一位擲骰。'); return; }
+    // 擲骰流程（保留 v9 的修正：等卡牌關閉後才進入換人）
+    function roll(){
+      if(state.players.length===0) return alert('請先加入玩家');
+      if(state.anim||state.moving) return;
+      if(state.waitingEnd){ alert('請先按「結束回合」，再由下一位擲骰。'); return; }
       pushSnapshot();
-      const p=state.players[state.turn]; let t=0; state.anim=true; $('#dice').classList.add('spin'); const iv=setInterval(()=>{ $('#dice').textContent=(Math.floor(Math.random()*6)+1); if(++t>10){ clearInterval(iv); const d=Math.floor(Math.random()*6)+1; $('#dice').textContent=d; $('#dice').classList.remove('spin'); state.anim=false; log(`${p.name} 擲出 ${d}`); movePawn(p,d).then(()=>{ resolveTile(p); if(state.extra){ state.extra=false; setTimeout(()=>{ log('額外擲骰！'); roll(); },300);} else { if($('#autoNext').checked){ nextTurn(); } else { state.waitingEnd = true; refreshTurnInfo(); updateControls(); } } }); } },70); }
+      const p=state.players[state.turn]; let t=0; state.anim=true; $('#dice').classList.add('spin');
+      const iv=setInterval(()=>{
+        $('#dice').textContent=(Math.floor(Math.random()*6)+1);
+        if(++t>10){
+          clearInterval(iv);
+          const d=Math.floor(Math.random()*6)+1;
+          $('#dice').textContent=d; $('#dice').classList.remove('spin'); state.anim=false;
+          log(`${p.name} 擲出 ${d}`);
+          movePawn(p,d)
+            .then(()=> resolveTile(p))
+            .then(()=>{
+              if(state.extra){
+                state.extra=false;
+                setTimeout(()=>{ log('額外擲骰！'); roll(); },300);
+              } else {
+                if($('#autoNext').checked){ nextTurn(); }
+                else { state.waitingEnd = true; refreshTurnInfo(); updateControls(); }
+              }
+            });
+        }
+      },70);
+    }
 
-    function movePawn(player,steps){ return new Promise(res=>{ if(state.moving) return res(); state.moving=true; const total=Math.abs(steps); let moved=0; const dir=steps>=0?1:-1; const timer=setInterval(()=>{ player.pos=(player.pos+dir+(4*(N-1)))%(4*(N-1)); updatePawnPosition(player); moved++; if(moved>=total){ clearInterval(timer); state.moving=false; res(); } },220); }); }
+    function movePawn(player,steps){
+      return new Promise(res=>{
+        if(state.moving) return res();
+        state.moving=true;
+        const total=Math.abs(steps); let moved=0; const dir=steps>=0?1:-1;
+        const timer=setInterval(()=>{
+          player.pos=(player.pos+dir+(4*(N-1)))%(4*(N-1));
+          updatePawnPosition(player);
+          moved++;
+          if(moved>=total){ clearInterval(timer); state.moving=false; res(); }
+        },220);
+      });
+    }
     function updatePawnPosition(p){ const tile=tileEls[p.pos]; if(!tile) return; const rect=tile.getBoundingClientRect(), boardRect=board.getBoundingClientRect(); const x=rect.left-boardRect.left+rect.width/2, y=rect.top-boardRect.top+rect.height/2; p.pawn.style.transform=`translate(${x}px, ${y}px)`; refreshTurnInfo(); }
 
-    // 停格 → 翻卡顯示 → 執行效果（已移除公杯相關行為）
-    function showTileModal(t, onOk){ $('#tileTitle').textContent=t.t; $('#tileType').textContent=t.type; $('#tileDesc').textContent=(t.desc||'沒有額外規則'); $('#flip').classList.remove('flipped'); $('#modalTile').style.display='flex'; $('#btnFlip').onclick=()=>$('#flip').classList.add('flipped'); $('#btnTileOk').onclick=()=>{ $('#modalTile').style.display='none'; onOk&&onOk(); }; }
-    function resolveTile(p){ const t=getRing28()[p.pos%28]; const after=()=>{ switch(t.type){ case 'start': p.sips+=1; log(`${p.name} 停在 START，+1 杯`); break; case 'beer': p.sips+=1; log(`${p.name} 觸發「${t.t}」，+1 杯。`); break; case 'danger': p.sips+=2; log(`${p.name} 觸發危險格「${t.t}」，+2 杯。`); break; case 'chance': openCard('chance'); return; case 'destiny': openCard('destiny'); return; default: if(t.desc) log(`${p.name}：${t.desc}`);} renderPlayers(); }; showTileModal(t, after); }
+    // 停格 → 翻卡顯示 → 執行效果
+    function resolveTile(p){
+      return new Promise(resolve=>{
+        const t=getRing28()[p.pos%28];
+        const after=()=>{
+          switch(t.type){
+            case 'start': p.sips+=1; log(`${p.name} 停在 START，+1 杯`); break;
+            case 'beer': p.sips+=1; log(`${p.name} 觸發「${t.t}」，+1 杯。`); break;
+            case 'danger': p.sips+=2; log(`${p.name} 觸發危險格「${t.t}」，+2 杯。`); break;
+            case 'chance': openCard('chance', resolve); return;
+            case 'destiny': openCard('destiny', resolve); return;
+            case 'game': openCard('game', resolve); return;
+            default: if(t.desc) log(`${p.name}：${t.desc}`);
+          }
+          renderPlayers();
+          resolve();
+        };
+        showTileModal(t, after);
+      });
+    }
+
+    function showTileModal(t, onOk){
+      $('#tileTitle').textContent=t.t;
+      $('#tileType').textContent=t.type;
+      $('#tileDesc').textContent=(t.desc||'沒有額外規則');
+      $('#flip').classList.remove('flipped');
+      $('#modalTile').style.display='flex';
+      $('#btnFlip').onclick=()=>$('#flip').classList.add('flipped');
+      $('#btnTileOk').onclick=()=>{ $('#modalTile').style.display='none'; onOk&&onOk(); };
+    }
 
     function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr }
-    function refill(type){ state[type]=shuffle(type==='chance'? [...cfg.chance] : [...cfg.destiny]); }
+    function refill(type){ if(type==='chance') state.chance=shuffle([...cfg.chance]); else if(type==='destiny') state.destiny=shuffle([...cfg.destiny]); else if(type==='game') state.game=shuffle([...cfg.game]); }
     function extraRoll(){ state.extra=true }
     function refreshPawn(){ placePawns(); refreshTurnInfo(); }
     function getRing28(){ const pad = {t:'空地',type:'normal',desc:''}; const ring = cfg.tiles.slice(0,28); while(ring.length<28) ring.push({...pad}); return ring }
 
-    function openCard(type){ $('#cardDeckTitle').textContent= type==='chance' ? '機會卡' : '命運卡'; $('#flipCard').classList.remove('flipped'); $('#modalCard').style.display='flex'; let executed=false; let card; const ensure=()=>{ if(executed) return; executed=true; if(state[type].length===0) refill(type); card=state[type].pop(); $('#cardText').textContent=card.text; try{ const player=state.players[state.turn], players=state.players; const move=(n)=>movePawn(player,n); const fn=new Function('player','players','move','extraRoll','refreshPawn', card.code||''); fn(player,players,move,extraRoll,refreshPawn); log(`[${type==='chance'?'機會':'命運'}] ${card.text}`); renderPlayers(); }catch(e){ log(`卡牌執行錯誤：${e.message}`); } };
+    function openCard(type, onDone){
+      const label = type==='chance' ? '機會卡' : (type==='destiny' ? '命運卡' : '遊戲卡');
+      $('#cardDeckTitle').textContent= label;
+      $('#flipCard').classList.remove('flipped');
+      $('#modalCard').style.display='flex';
+      let executed=false; let card;
+      const ensure=()=>{
+        if(executed) return; executed=true;
+        if(state[type].length===0) refill(type);
+        card=state[type].pop();
+        $('#cardText').textContent=card.text;
+        try{
+          const player=state.players[state.turn], players=state.players;
+          const move=(n)=>movePawn(player,n);
+          const fn=new Function('player','players','move','extraRoll','refreshPawn', card.code||'');
+          fn(player,players,move,extraRoll,refreshPawn);
+          log(`[${label}] ${card.text}`);
+          renderPlayers();
+        }catch(e){ log(`卡牌執行錯誤：${e.message}`); }
+      };
       $('#btnFlipCard').onclick=()=>{ $('#flipCard').classList.add('flipped'); ensure(); };
-      $('#btnCardOk').onclick=()=>{ $('#modalCard').style.display='none'; if(!state.extra){ if($('#autoNext').checked){ nextTurn(); } else { state.waitingEnd = true; refreshTurnInfo(); updateControls(); } } };
+      $('#btnCardOk').onclick=()=>{ $('#modalCard').style.display='none'; onDone && onDone(); };
     }
 
     // 編輯器
-    function openEditor(){ renderTileTable(); renderCardList('#chanceList',cfg.chance); renderCardList('#destinyList',cfg.destiny); $('#modalEditor').style.display='flex' }
-    function closeEditor(){ $('#modalEditor').style.display='none'; buildBoard(); $('#chancePeek').textContent=`${cfg.chance.length} 張（洗牌後抽取）`; $('#destinyPeek').textContent=`${cfg.destiny.length} 張（洗牌後抽取）`; log('設定已儲存。'); }
+    function openEditor(){ renderTileTable(); renderCardList('#chanceList',cfg.chance); renderCardList('#destinyList',cfg.destiny); renderCardList('#gameList',cfg.game); $('#modalEditor').style.display='flex' }
+    function closeEditor(){ $('#modalEditor').style.display='none'; buildBoard(); $('#chancePeek').textContent=`${cfg.chance.length} 張（洗牌後抽取）`; $('#destinyPeek').textContent=`${cfg.destiny.length} 張（洗牌後抽取）`; $('#gamePeek').textContent=`${cfg.game.length} 張（洗牌後抽取）`; log('設定已儲存。'); }
 
     function updateTileCount(){ const n = cfg.tiles.length; $('#tileCount').textContent = `（目前 ${n}，外圈使用前 28 格）`; }
 
-    function renderTileTable(){ const tb=$('#tblTiles tbody'); tb.innerHTML=''; cfg.tiles.forEach((t,i)=>{ const tr=el('tr'); tr.appendChild(el('td','',i)); const tdT=el('td'); const inT=el('input'); inT.value=t.t; inT.oninput=()=>{t.t=inT.value}; tdT.appendChild(inT); tr.appendChild(tdT); const tdTy=el('td'); const sel=el('select'); ['start','chance','destiny','shot','beer','danger','normal'].forEach(k=>{ const o=el('option','',k); o.value=k; if(k===t.type) o.selected=true; sel.appendChild(o)}); sel.onchange=()=>t.type=sel.value; tdTy.appendChild(sel); tr.appendChild(tdTy); const tdD=el('td'); const ta=el('textarea'); ta.value=t.desc||''; ta.oninput=()=>t.desc=ta.value; tdD.appendChild(ta); tr.appendChild(tdD); const tdA=el('td'); const rm=el('button','btn','刪除'); rm.onclick=()=>{ cfg.tiles.splice(i,1); renderTileTable(); updateTileCount(); buildBoard(); }; tdA.appendChild(rm); tr.appendChild(tdA); tb.appendChild(tr); }); updateTileCount(); }
+    function renderTileTable(){ const tb=$('#tblTiles tbody'); tb.innerHTML=''; cfg.tiles.forEach((t,i)=>{ const tr=el('tr'); tr.appendChild(el('td','',i)); const tdT=el('td'); const inT=el('input'); inT.value=t.t; inT.oninput=()=>{t.t=inT.value}; tdT.appendChild(inT); tr.appendChild(tdT); const tdTy=el('td'); const sel=el('select'); ['start','chance','destiny','shot','beer','danger','game','normal'].forEach(k=>{ const o=el('option','',k); o.value=k; if(k===t.type) o.selected=true; sel.appendChild(o)}); sel.onchange=()=>t.type=sel.value; tdTy.appendChild(sel); tr.appendChild(tdTy); const tdD=el('td'); const ta=el('textarea'); ta.value=t.desc||''; ta.oninput=()=>t.desc=ta.value; tdD.appendChild(ta); tr.appendChild(tdD); const tdA=el('td'); const rm=el('button','btn','刪除'); rm.onclick=()=>{ cfg.tiles.splice(i,1); renderTileTable(); updateTileCount(); buildBoard(); }; tdA.appendChild(rm); tr.appendChild(tdA); tb.appendChild(tr); }); updateTileCount(); }
 
     function renderCardList(sel,arr){ const box=$(sel); box.innerHTML=''; arr.forEach((c,i)=>{ const card=el('div','card'); const title=el('input'); title.value=c.text; title.style.width='100%'; title.oninput=()=>c.text=title.value; const code=el('textarea'); code.placeholder='effect 程式碼，可用：player, players, move(n), extraRoll(), refreshPawn()'; code.value=c.code||''; code.oninput=()=>c.code=code.value; const rm=el('button','btn','刪除'); rm.onclick=()=>{arr.splice(i,1); renderCardList(sel,arr)}; card.appendChild(title); card.appendChild(code); card.appendChild(rm); box.appendChild(card); }); }
 
@@ -342,25 +448,24 @@
     $('#pad28').onclick=()=>{ while(cfg.tiles.length<28) cfg.tiles.push({t:'空地',type:'normal',desc:''}); renderTileTable(); updateTileCount(); buildBoard(); };
     $('#addChance').onclick=()=>{ cfg.chance.push({text:'新機會卡',code:''}); renderCardList('#chanceList',cfg.chance) };
     $('#addDestiny').onclick=()=>{ cfg.destiny.push({text:'新命運卡',code:''}); renderCardList('#destinyList',cfg.destiny) };
+    $('#addGame').onclick=()=>{ cfg.game.push({text:'新遊戲卡',code:''}); renderCardList('#gameList',cfg.game) };
 
-    // 存檔/讀檔（已移除公杯欄位）
-    $('#btnExportSave').onclick = e=>{ const save={ players: state.players.map(p=>({name:p.name,color:p.color,pos:p.pos,sips:p.sips,totalSips:p.totalSips,skip:p.skip,buff:p.buff})), turn: state.turn, cfg, chance: state.chance, destiny: state.destiny, waitingEnd: state.waitingEnd }; const blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); e.target.href=url; e.target.download='alcohol-monopoly-save.json'; };
+    // 存檔/讀檔（含遊戲卡池）
+    $('#btnExportSave').onclick = e=>{ const save={ players: state.players.map(p=>({name:p.name,color:p.color,pos:p.pos,sips:p.sips,totalSips:p.totalSips,skip:p.skip,buff:p.buff})), turn: state.turn, cfg, chance: state.chance, destiny: state.destiny, game: state.game, waitingEnd: state.waitingEnd }; const blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); e.target.href=url; e.target.download='alcohol-monopoly-save.json'; };
     $('#btnImportSave').onclick=()=>$('#importSave').click();
-    $('#importSave').onchange = ev=>{ const f=ev.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const data=JSON.parse(rd.result); cfg=data.cfg||cfg; state.players=[]; (data.players||[]).forEach(p=>addPlayer(p.name)); state.players.forEach((p,i)=>{ const d=data.players[i]; p.pos=d.pos; p.sips=d.sips||0; p.totalSips=d.totalSips||0; p.skip=d.skip||false; p.buff=d.buff||0; }); state.turn=data.turn||0; state.chance=data.chance||[]; state.destiny=data.destiny||[]; state.waitingEnd=!!data.waitingEnd; buildBoard(); placePawns(); renderPlayers(); refreshTurnInfo(); updateControls(); log('已載入存檔'); }catch(err){ alert('載入失敗') } }; rd.readAsText(f) };
+    $('#importSave').onchange = ev=>{ const f=ev.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const data=JSON.parse(rd.result); cfg=data.cfg||cfg; state.players=[]; (data.players||[]).forEach(p=>addPlayer(p.name)); state.players.forEach((p,i)=>{ const d=data.players[i]; p.pos=d.pos; p.sips=d.sips||0; p.totalSips=d.totalSips||0; p.skip=d.skip||false; p.buff=d.buff||0; }); state.turn=data.turn||0; state.chance=data.chance||[]; state.destiny=data.destiny||[]; state.game=data.game||[]; state.waitingEnd=!!data.waitingEnd; buildBoard(); placePawns(); renderPlayers(); refreshTurnInfo(); updateControls(); log('已載入存檔'); }catch(err){ alert('載入失敗') } }; rd.readAsText(f) };
 
-    // 介面控制狀態
     function log(t){ const it=el('div','item', new Date().toLocaleTimeString()+" · "+t); $('#log').prepend(it) }
     function updateControls(){ $('#roll').disabled = state.waitingEnd || state.anim || state.moving || state.players.length===0; $('#endTurn').disabled = !state.waitingEnd || state.players.length===0; $('#undoBtn').disabled = H.length===0; }
 
-    // 基本事件
     $('#addPlayer').onclick=()=>{ addPlayer($('#playerName').value.trim()); $('#playerName').value=''; };
     $('#quick2').onclick=()=>{ ['玩家1','玩家2'].forEach(addPlayer) };
     $('#quick4').onclick=()=>{ ['玩家1','玩家2','玩家3','玩家4'].forEach(addPlayer) };
     $('#roll').onclick=roll; $('#endTurn').onclick=nextTurn; $('#undoBtn').onclick=undo;
     $('#btnReset').onclick=()=>{ if(confirm('確定要重新開始嗎？')) location.reload(); };
-    $('#btnHow').onclick=()=>{ alert('玩法速覽\n\n1) 新增 2~20 位玩家\n2) 可用「檢視/編輯」調整所有格子與卡牌\n3) 擲骰在右下角浮動區；停格會彈出翻卡顯示規則\n4) 勾選「自動換人」可自動輪到下一位；未勾選時需按「結束回合」，系統會鎖住擲骰避免連續走兩輪\n5) 可用「導出/載入存檔」保存進度\n'); };
+    $('#btnHow').onclick=()=>{ alert('玩法速覽\n\n1) 新增 2~20 位玩家\n2) 可用「檢視/編輯」調整所有格子與卡牌（含「遊戲卡」）\n3) 擲骰在右下角浮動區；停格會彈出翻卡顯示規則\n4) 勾選「自動換人」可自動輪到下一位；未勾選時需按「結束回合」，系統會鎖住擲骰避免連續走兩輪\n5) 可用「導出/載入存檔」保存進度\n6) 出發後若再次走到「START」，需喝完當前公杯\n7) 本遊戲開始後，不許有玩家擅自離席去廁所；若逼不得已，請自罰 2 杯後即可申請去廁所\n\n提示：停到「遊戲時間」時會從「遊戲卡池」抽一張卡，本回合就玩那個遊戲！'); };
 
-    function init(){ buildBoard(); $('#chancePeek').textContent=`${DEFAULT.chance.length} 張（洗牌後抽取）`; $('#destinyPeek').textContent=`${DEFAULT.destiny.length} 張（洗牌後抽取）`; refreshTurnInfo(); updateControls(); log('酒精大富翁v8'); }
+    function init(){ buildBoard(); $('#chancePeek').textContent=`${DEFAULT.chance.length} 張（洗牌後抽取）`; $('#destinyPeek').textContent=`${DEFAULT.destiny.length} 張（洗牌後抽取）`; $('#gamePeek').textContent=`${DEFAULT.game.length} 張（洗牌後抽取）`; refreshTurnInfo(); updateControls(); log('v10：放大翻卡字體＋加入「遊戲卡池」'); }
     init();
   </script>
 </body>
