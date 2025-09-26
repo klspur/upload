@@ -17,7 +17,11 @@
     }
     html,body{height:100%;margin:0;background:#0e1420;color:var(--text);font-family:ui-sans-serif,system-ui,"Segoe UI",Noto Sans,Arial;overflow:auto}
 
+    body.host-mode{overflow:hidden}
+
     .app{min-height:100%;display:grid;grid-template-rows:56px 1fr;gap:8px;padding:10px}
+    body.host-mode .app{height:100vh}
+
     .top{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:12px;padding:0 10px}
     .top .row{flex-wrap:wrap;justify-content:flex-end}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800}
@@ -25,7 +29,12 @@
     .btn:disabled{opacity:.5;cursor:not-allowed}
 
     .grid{display:grid;grid-template-columns:320px 1fr 320px;grid-template-rows:1fr;gap:10px;min-height:0}
+    body.host-mode .grid{height:100%}
     .pane{background:var(--panel);border-radius:12px;padding:10px;overflow:auto;min-height:0}
+    body.host-mode .pane{overflow:hidden}
+    body.host-mode #playersPane{display:flex;flex-direction:column;gap:10px}
+    body.host-mode #playersPane > .card{flex-shrink:0}
+    body.host-mode #playerList{flex:1;overflow:auto;min-height:0;padding-right:6px}
     .title{font-size:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
     .card{border:1px solid #324666;border-radius:12px;padding:10px;background:#0f1522}
     .list{display:grid;gap:8px}
@@ -47,9 +56,16 @@
     .client-list{display:grid;gap:6px}
     .client-list .item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;background:rgba(26,36,56,.6)}
     .client-list .item .player-avatar{width:32px;height:32px}
+
     input,select,textarea{background:#0f1624;border:1px solid #2c3f60;color:var(--text);border-radius:10px;padding:8px}
 
+    .client-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.65);z-index:70}
+    .client-overlay .box{width:min(480px,94vw);background:rgba(15,22,36,.94);border:1px solid #2e4161;border-radius:14px;padding:16px;display:grid;gap:12px}
+    .client-overlay .hint{color:var(--muted);font-size:13px}
+    .client-overlay .face{border:0;background:transparent}
+
     .meter{background:#0b1220;border-radius:8px;border:1px solid #2b3952;height:8px;width:120px;position:relative;overflow:hidden}
+
     .meter span{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#77c6ff,#b282ff)}
 
     .board-wrap{position:relative;display:grid;place-items:center;height:100%}
@@ -113,6 +129,13 @@
       .grid{grid-template-columns:1fr;grid-template-rows:auto auto auto}
       .hud{position:static;right:auto;bottom:auto}
       .app{grid-template-rows:auto auto 1fr}
+
+      body.host-mode{overflow:auto}
+      body.host-mode .app{height:auto}
+      body.host-mode .pane{overflow:auto}
+      body.host-mode #playersPane{display:block}
+      body.host-mode #playerList{overflow:visible;padding-right:0}
+
     }
     @media (max-width:900px){
       .board{width:100%;max-width:100%;aspect-ratio:1/1}
@@ -142,8 +165,9 @@
     </div>
 
     <div class="grid">
-      <div class="pane">
+      <div class="pane" id="playersPane">
         <div class="title">玩家</div>
+
         <div class="card">
           <div class="row"><input id="playerName" placeholder="玩家名稱，例如：小明"><button class="btn" id="addPlayer">加入</button></div>
           <div class="row"><button class="btn" id="quick2">快速 2 人</button><button class="btn" id="quick4">快速 4 人</button></div>
@@ -196,7 +220,7 @@
           <input type="file" id="clientAvatar" accept="image/*">
           <button class="btn" id="clientJoinBtn" type="button">加入</button>
         </div>
-        <div class="hint">可上傳個人大頭貼（建議小於 1 MB）。</div>
+        <div class="hint">可上傳個人大頭貼（建議小於 5 MB）。</div>
       </div>
       <div class="card" id="clientControls" style="display:none">
         <div class="title">行動操控</div>
@@ -220,6 +244,53 @@
       </div>
     </div>
 
+    <div class="client-overlay" id="clientTileModal">
+      <div class="box">
+        <div class="flip" id="clientTileFlip">
+          <div class="flip-inner">
+            <div class="face front">
+              <div class="row" style="justify-content:space-between;align-items:center">
+                <div class="title">你停在</div>
+                <button class="btn" id="clientTileFlipBtn" type="button">翻開內容</button>
+              </div>
+              <h2 id="clientTileTitle" style="margin:6px 0 4px"></h2>
+              <div class="card" id="clientTileType" style="display:inline-block"></div>
+              <div class="hint" id="clientTileHint"></div>
+            </div>
+            <div class="face back">
+              <div class="title">規則內容</div>
+              <div id="clientTileDesc" style="white-space:pre-wrap;"></div>
+              <div class="hint" id="clientTileControllerHint"></div>
+              <div class="row" style="margin-top:12px;justify-content:end"><button class="btn" id="clientTileOkBtn" type="button">了解，執行</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="client-overlay" id="clientCardModal">
+      <div class="box">
+        <div class="flip" id="clientCardFlip">
+          <div class="flip-inner">
+            <div class="face front">
+              <div class="row" style="justify-content:space-between;align-items:center">
+                <div class="title" id="clientCardDeck">抽卡</div>
+                <button class="btn" id="clientCardFlipBtn" type="button">翻開卡牌</button>
+              </div>
+              <h2 style="margin:6px 0 4px">？？？</h2>
+              <div class="card hint">等待翻開以查看內容</div>
+            </div>
+            <div class="face back">
+              <div class="title">卡牌內容</div>
+              <h3 id="clientCardText" style="margin:6px 0 8px"></h3>
+              <div class="hint" id="clientCardHint">卡牌效果將立即執行</div>
+              <div class="hint" id="clientCardControllerHint"></div>
+              <div class="row" style="margin-top:12px;justify-content:end"><button class="btn" id="clientCardOkBtn" type="button">好</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="hud">
       <div class="panel">
         <div class="row"><div class="dice" id="dice">–</div><button class="btn" id="roll">擲骰</button><button class="btn" id="endTurn">結束回合</button><button class="btn" id="undoBtn">回上一步</button></div>
@@ -311,6 +382,7 @@
     const isClientMode = !!joinCodeParam;
     const isHostMode = !isClientMode;
     if(isClientMode) document.body.classList.add('client-mode');
+    if(isHostMode) document.body.classList.add('host-mode');
     let roomId = '';
     const peerConnections = new Set();
     const playerConnections = new Map();
@@ -318,9 +390,32 @@
     let peerReady = false;
     const MAX_LOG_HISTORY = 60;
     const logHistory = [];
+    const controlState = { tile:null, card:null };
+    let pendingTileOnOk = null;
+    let pendingCardOnDone = null;
     const clientContext = { peer:null, conn:null, joined:false, playerId:null };
     let remoteStatusEl=null, joinUrlEl=null, roomCodeEl=null, joinQrCanvas=null, copyJoinBtn=null;
     let clientStatusEl=null, clientMessageEl=null, clientJoinCardEl=null, clientControlsEl=null, clientPlayersEl=null, clientLogEl=null, clientRollBtn=null, clientEndBtn=null, clientTurnNameEl=null, clientPosEl=null, clientDiceInfoEl=null, clientPlayersCardEl=null, clientLogCardEl=null, clientJoinBtnEl=null, clientNameInputEl=null, clientAvatarInputEl=null;
+    let clientTileModalEl=null, clientTileFlipWrapEl=null, clientTileFlipBtnEl=null, clientTileOkBtnEl=null, clientTileTitleEl=null, clientTileTypeEl=null, clientTileDescEl=null, clientTileHintEl=null, clientTileControllerHintEl=null;
+    let clientCardModalEl=null, clientCardFlipWrapEl=null, clientCardFlipBtnEl=null, clientCardOkBtnEl=null, clientCardDeckEl=null, clientCardTextEl=null, clientCardHintEl=null, clientCardControllerHintEl=null;
+
+    const ICE_SERVERS=[
+      {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302','stun:stun3.l.google.com:19302']},
+      {urls:'stun:stun4.l.google.com:19302'}
+    ];
+    const BASE_PEER_OPTIONS={host:'0.peerjs.com',port:443,secure:true,path:'/',debug:1};
+    function buildPeerOptions(extra={}){
+      return {
+        ...BASE_PEER_OPTIONS,
+        ...extra,
+        config:{
+          iceServers: ICE_SERVERS.map(server=>({
+            ...server,
+            urls: Array.isArray(server.urls)?[...server.urls]:server.urls
+          }))
+        }
+      };
+    }
 
     function generateRoomId(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
     function normalizeRoomId(code){ return (code||'').toString().trim().toLowerCase(); }
@@ -342,7 +437,11 @@
         waitingEnd: state.waitingEnd,
         activePlayerId: active ? active.id : null,
         dice: ($('#dice')||{textContent:'–'}).textContent,
-        logs: logHistory.slice(0,12)
+        logs: logHistory.slice(0,12),
+        control: {
+          tile: controlState.tile ? {...controlState.tile} : null,
+          card: controlState.card ? {...controlState.card} : null
+        }
       };
     }
 
@@ -485,6 +584,8 @@
           }
           playerConnections.delete(p.id);
         }
+        if(controlState.tile && controlState.tile.controllerId===p.id){ controlState.tile.controllerId=null; }
+        if(controlState.card && controlState.card.controllerId===p.id){ controlState.card.controllerId=null; }
         if(state.players.length===0){ state.turn=0; }
         else if(state.turn>=state.players.length){ state.turn=state.turn%state.players.length; }
         log(`移除玩家：${p.name}`);
@@ -639,13 +740,83 @@
     }
 
     function showTileModal(t, onOk){
+      const active=state.players[state.turn]||null;
+      controlState.tile={
+        title:t.t,
+        type:t.type,
+        desc:t.desc||'沒有額外規則',
+        flipped:false,
+        controllerId:active?active.id:null
+      };
+      pendingTileOnOk=onOk||null;
       $('#tileTitle').textContent=t.t;
       $('#tileType').textContent=t.type;
-      $('#tileDesc').textContent=(t.desc||'沒有額外規則');
+      $('#tileDesc').textContent=controlState.tile.desc;
       $('#flip').classList.remove('flipped');
       $('#modalTile').style.display='flex';
-      $('#btnFlip').onclick=()=>$('#flip').classList.add('flipped');
-      $('#btnTileOk').onclick=()=>{ $('#modalTile').style.display='none'; onOk&&onOk(); };
+      const flipBtn=$('#btnFlip');
+      const okBtn=$('#btnTileOk');
+      if(flipBtn){
+        flipBtn.onclick=handleHostTileFlip;
+        flipBtn.disabled=false;
+        flipBtn.textContent='翻開內容';
+        if(active&&active.remote){
+          flipBtn.disabled=true;
+          flipBtn.textContent='等待玩家翻開';
+        }
+      }
+      if(okBtn){
+        okBtn.onclick=handleHostTileOk;
+        okBtn.disabled=true;
+        okBtn.textContent=active&&active.remote?'等待玩家翻開':'請先翻開';
+      }
+      syncState();
+    }
+
+    function handleHostTileFlip(){
+      const active=state.players[state.turn]||null;
+      if(active&&active.remote) return;
+      applyTileFlip();
+    }
+
+    function handleHostTileOk(){
+      if(controlState.tile && !controlState.tile.flipped){
+        const active=state.players[state.turn]||null;
+        if(active&&active.remote){
+          alert('請等待該玩家翻開內容');
+          return;
+        }
+        applyTileFlip();
+        return;
+      }
+      completeTileModal();
+    }
+
+    function applyTileFlip(){
+      if(!controlState.tile || controlState.tile.flipped) return;
+      $('#flip').classList.add('flipped');
+      controlState.tile.flipped=true;
+      const flipBtn=$('#btnFlip');
+      const okBtn=$('#btnTileOk');
+      if(flipBtn){
+        flipBtn.disabled=true;
+        flipBtn.textContent='內容已翻開';
+      }
+      if(okBtn){
+        okBtn.disabled=false;
+        okBtn.textContent='了解，執行';
+      }
+      syncState();
+    }
+
+    function completeTileModal(){
+      if(!controlState.tile) return;
+      $('#modalTile').style.display='none';
+      const cb=pendingTileOnOk;
+      pendingTileOnOk=null;
+      controlState.tile=null;
+      syncState();
+      cb&&cb();
     }
 
     function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr }
@@ -656,27 +827,57 @@
 
     function openCard(type, onDone){
       const label = type==='chance' ? '機會卡' : (type==='destiny' ? '命運卡' : '遊戲卡');
-      $('#cardDeckTitle').textContent= label;
+      const active=state.players[state.turn]||null;
+      controlState.card={ deck:type,label,flipped:false,controllerId:active?active.id:null,text:null };
+      pendingCardOnDone=onDone||null;
+      $('#cardDeckTitle').textContent=label;
+      $('#cardText').textContent='';
       $('#flipCard').classList.remove('flipped');
       $('#modalCard').style.display='flex';
-      let executed=false; let card;
-      const ensure=()=>{
-        if(executed) return; executed=true;
-        if(state[type].length===0) refill(type);
-        card=state[type].pop();
-        $('#cardText').textContent=card.text;
-        try{
-          const player=state.players[state.turn], players=state.players;
-          const move=(n)=>movePawn(player,n);
-          const fn=new Function('player','players','move','extraRoll','refreshPawn', card.code||'');
-          fn(player,players,move,extraRoll,refreshPawn);
-          log(`[${label}] ${card.text}`);
-          renderPlayers();
-          syncState();
-        }catch(e){ log(`卡牌執行錯誤：${e.message}`); }
-      };
-      $('#btnFlipCard').onclick=()=>{ $('#flipCard').classList.add('flipped'); ensure(); };
-      $('#btnCardOk').onclick=()=>{ $('#modalCard').style.display='none'; onDone && onDone(); };
+      $('#btnFlipCard').onclick=handleHostCardFlip;
+      $('#btnCardOk').onclick=handleHostCardOk;
+      syncState();
+    }
+
+    function handleHostCardFlip(){ revealCurrentCard(); }
+
+    function handleHostCardOk(){
+      if(controlState.card && !controlState.card.flipped) revealCurrentCard();
+      closeCardModal();
+    }
+
+    function revealCurrentCard(){
+      if(!controlState.card || controlState.card.flipped) return;
+      const type=controlState.card.deck;
+      if(!type) return;
+      if(state[type].length===0) refill(type);
+      const card=state[type].pop();
+      controlState.card.flipped=true;
+      controlState.card.text=card.text;
+      $('#flipCard').classList.add('flipped');
+      $('#cardText').textContent=card.text;
+      try{
+        const player=state.players[state.turn];
+        const players=state.players;
+        const move=n=>movePawn(player,n);
+        const fn=new Function('player','players','move','extraRoll','refreshPawn', card.code||'');
+        fn(player,players,move,extraRoll,refreshPawn);
+      }catch(e){
+        log(`卡牌執行錯誤：${e.message}`);
+      }
+      renderPlayers();
+      log(`[${controlState.card.label}] ${card.text}`);
+      syncState();
+    }
+
+    function closeCardModal(){
+      if(!controlState.card) return;
+      $('#modalCard').style.display='none';
+      const done=pendingCardOnDone;
+      pendingCardOnDone=null;
+      controlState.card=null;
+      syncState();
+      done&&done();
     }
 
     function setupHostNetworking(){
@@ -714,7 +915,7 @@
         QRCode.toCanvas(joinQrCanvas, joinUrlText,{width:200,margin:1},err=>{ if(err) console.warn(err); });
       }
       remoteStatusEl.textContent='正在建立房間…';
-      peerInstance = new Peer(`alco-${normalizeRoomId(roomId)}`,{debug:2});
+      peerInstance = new Peer(`alco-${normalizeRoomId(roomId)}`,buildPeerOptions({debug:2}));
       peerInstance.on('open',()=>{ peerReady=true; remoteStatusEl.textContent='等待玩家加入'; updateRemoteStatus(); syncState(); });
       peerInstance.on('connection',conn=>{
         peerConnections.add(conn);
@@ -771,6 +972,38 @@
             else { nextTurn(); }
           }
           break;
+        case 'tileFlip':
+          if(conn.playerId && controlState.tile && controlState.tile.controllerId===conn.playerId){
+            applyTileFlip();
+          }
+          break;
+        case 'tileDone':
+          if(conn.playerId){
+            if(!controlState.tile || controlState.tile.controllerId!==conn.playerId){
+              sendToPlayer(conn.playerId,{type:'info',message:'等待主持人進行下一步'});
+            }else if(!controlState.tile.flipped){
+              sendToPlayer(conn.playerId,{type:'info',message:'請先翻開內容'});
+            }else{
+              completeTileModal();
+            }
+          }
+          break;
+        case 'cardFlip':
+          if(conn.playerId && controlState.card && controlState.card.controllerId===conn.playerId){
+            revealCurrentCard();
+          }
+          break;
+        case 'cardDone':
+          if(conn.playerId){
+            if(!controlState.card || controlState.card.controllerId!==conn.playerId){
+              sendToPlayer(conn.playerId,{type:'info',message:'等待主持人進行下一步'});
+            }else if(!controlState.card.flipped){
+              sendToPlayer(conn.playerId,{type:'info',message:'請先翻開卡牌'});
+            }else{
+              closeCardModal();
+            }
+          }
+          break;
         default:
           break;
       }
@@ -816,9 +1049,28 @@
       clientJoinBtnEl=$('#clientJoinBtn');
       clientNameInputEl=$('#clientName');
       clientAvatarInputEl=$('#clientAvatar');
+      clientTileModalEl=$('#clientTileModal');
+      clientTileFlipWrapEl=$('#clientTileFlip');
+      clientTileFlipBtnEl=$('#clientTileFlipBtn');
+      clientTileOkBtnEl=$('#clientTileOkBtn');
+      clientTileTitleEl=$('#clientTileTitle');
+      clientTileTypeEl=$('#clientTileType');
+      clientTileDescEl=$('#clientTileDesc');
+      clientTileHintEl=$('#clientTileHint');
+      clientTileControllerHintEl=$('#clientTileControllerHint');
+      clientCardModalEl=$('#clientCardModal');
+      clientCardFlipWrapEl=$('#clientCardFlip');
+      clientCardFlipBtnEl=$('#clientCardFlipBtn');
+      clientCardOkBtnEl=$('#clientCardOkBtn');
+      clientCardDeckEl=$('#clientCardDeck');
+      clientCardTextEl=$('#clientCardText');
+      clientCardHintEl=$('#clientCardHint');
+      clientCardControllerHintEl=$('#clientCardControllerHint');
       if(clientControlsEl) clientControlsEl.style.display='none';
       if(clientRollBtn) clientRollBtn.disabled=true;
       if(clientEndBtn) clientEndBtn.disabled=true;
+      if(clientTileModalEl) clientTileModalEl.style.display='none';
+      if(clientCardModalEl) clientCardModalEl.style.display='none';
       const roomLabel=$('#clientRoomCode');
       roomId=(code||'').toString().toUpperCase();
       if(roomLabel) roomLabel.textContent=roomId||'—';
@@ -826,7 +1078,7 @@
       if(!window.Peer){ if(clientStatusEl) clientStatusEl.textContent='行動控制模組載入失敗，請稍後再試。'; if(clientJoinCardEl) clientJoinCardEl.style.display='none'; return; }
       if(clientJoinBtnEl) clientJoinBtnEl.disabled=true;
       showClientMessage('');
-      const peer=new Peer(undefined,{debug:2});
+      const peer=new Peer(undefined,buildPeerOptions({debug:2}));
       clientContext.peer=peer;
       if(clientStatusEl) clientStatusEl.textContent='正在嘗試連線…';
       peer.on('open',()=>{
@@ -846,6 +1098,8 @@
           if(clientJoinCardEl) clientJoinCardEl.style.display='block';
           if(clientJoinBtnEl) clientJoinBtnEl.disabled=false;
           if(clientControlsEl) clientControlsEl.style.display='none';
+          if(clientTileModalEl) clientTileModalEl.style.display='none';
+          if(clientCardModalEl) clientCardModalEl.style.display='none';
           showClientMessage('');
         });
         conn.on('error',err=>{ if(clientStatusEl) clientStatusEl.textContent='連線錯誤：'+(err&&err.message?err.message:err); });
@@ -858,6 +1112,95 @@
       if(!clientMessageEl) return;
       clientMessageEl.textContent=text||'';
       clientMessageEl.style.color=type==='error'?'#ff9b9b':'var(--muted)';
+    }
+
+    function updateClientControl(data){
+      if(!data) data={};
+      const control=data.control||{};
+      const players=data.players||[];
+      const myId=clientContext.playerId;
+      const canSend=clientContext.conn&&clientContext.conn.open;
+      const controllerName=playerId=>{
+        const found=players.find(p=>p.id===playerId);
+        return found?found.name:'';
+      };
+
+      const tile=control.tile||null;
+      if(clientTileModalEl){
+        if(tile){
+          clientTileModalEl.style.display='flex';
+          if(clientTileTitleEl) clientTileTitleEl.textContent=tile.title||'';
+          if(clientTileTypeEl){
+            clientTileTypeEl.textContent=tile.type||'';
+            clientTileTypeEl.style.display=tile.type?'inline-block':'none';
+          }
+          if(clientTileDescEl) clientTileDescEl.textContent=tile.flipped?(tile.desc||''): '翻開後顯示內容';
+          if(clientTileFlipWrapEl){
+            if(tile.flipped) clientTileFlipWrapEl.classList.add('flipped'); else clientTileFlipWrapEl.classList.remove('flipped');
+          }
+          const ownerName=controllerName(tile.controllerId);
+          if(clientTileHintEl){
+            if(tile.controllerId && tile.controllerId===myId){
+              clientTileHintEl.textContent=tile.flipped?'請依照規則進行。':'輪到你了，請翻開內容。';
+            }else if(ownerName){
+              clientTileHintEl.textContent=tile.flipped?`${ownerName} 已翻開內容。`:`等待 ${ownerName} 翻開內容…`;
+            }else{
+              clientTileHintEl.textContent=tile.flipped?'主持人已翻開內容。':'等待主持人翻開內容…';
+            }
+          }
+          if(clientTileControllerHintEl){
+            if(tile.controllerId && tile.controllerId===myId){
+              clientTileControllerHintEl.textContent='翻開後請在現場執行規則。';
+            }else if(ownerName){
+              clientTileControllerHintEl.textContent=tile.flipped?`${ownerName} 正在執行規則。`:`${ownerName} 的回合。`;
+            }else{
+              clientTileControllerHintEl.textContent=tile.flipped?'請依主持人指示進行。':'';
+            }
+          }
+          if(clientTileFlipBtnEl){
+            const canFlip=!!tile.controllerId && tile.controllerId===myId && !tile.flipped && canSend;
+            clientTileFlipBtnEl.disabled=!canFlip;
+          }
+          if(clientTileOkBtnEl){
+            const canConfirm=!!tile.controllerId && tile.controllerId===myId && tile.flipped && canSend;
+            clientTileOkBtnEl.disabled=!canConfirm;
+          }
+        } else {
+          clientTileModalEl.style.display='none';
+        }
+      }
+
+      const card=control.card||null;
+      if(clientCardModalEl){
+        if(card){
+          clientCardModalEl.style.display='flex';
+          if(clientCardDeckEl) clientCardDeckEl.textContent=card.label||'抽卡';
+          if(clientCardTextEl) clientCardTextEl.textContent=card.flipped?(card.text||''):'';
+          if(clientCardFlipWrapEl){
+            if(card.flipped) clientCardFlipWrapEl.classList.add('flipped'); else clientCardFlipWrapEl.classList.remove('flipped');
+          }
+          const ownerName=controllerName(card.controllerId);
+          if(clientCardControllerHintEl){
+            if(card.controllerId && card.controllerId===myId){
+              clientCardControllerHintEl.textContent=card.flipped?'請確認卡牌內容並執行效果。':'輪到你翻開卡牌。';
+            }else if(ownerName){
+              clientCardControllerHintEl.textContent=card.flipped?`${ownerName} 正在查看卡牌。`:`等待 ${ownerName} 翻開卡牌…`;
+            }else{
+              clientCardControllerHintEl.textContent=card.flipped?'主持人已翻開卡牌內容。':'';
+            }
+          }
+          if(clientCardFlipBtnEl){
+            const canFlip=!!card.controllerId && card.controllerId===myId && !card.flipped && canSend;
+            clientCardFlipBtnEl.disabled=!canFlip;
+          }
+          if(clientCardOkBtnEl){
+            const canConfirm=!!card.controllerId && card.controllerId===myId && card.flipped && canSend;
+            clientCardOkBtnEl.disabled=!canConfirm;
+          }
+        } else {
+          clientCardModalEl.style.display='none';
+        }
+      }
     }
 
     function updateClientState(data){
@@ -894,6 +1237,7 @@
         (data.logs||[]).forEach(msg=>{ const item=el('div','',msg); clientLogEl.appendChild(item); });
         if(clientLogCardEl) clientLogCardEl.style.display=(data.logs&&data.logs.length)?'block':'none';
       }
+      updateClientControl(data);
       const me=data.players.find(p=>p.id===clientContext.playerId);
       if(clientPosEl) clientPosEl.textContent=me?me.pos:'—';
       if(clientControlsEl) clientControlsEl.style.display=clientContext.joined?'block':'none';
@@ -910,7 +1254,7 @@
 
     async function readAvatarFile(file){
       if(!file) return null;
-      if(file.size>1024*1024) throw new Error('圖片需小於 1 MB');
+      if(file.size>5*1024*1024) throw new Error('圖片需小於 5 MB');
       const dataUrl=await new Promise((resolve,reject)=>{
         const reader=new FileReader();
         reader.onload=()=>resolve(reader.result);
@@ -966,6 +1310,36 @@
           }
         };
       }
+      if(clientTileFlipBtnEl){
+        clientTileFlipBtnEl.onclick=()=>{
+          if(clientContext.conn&&clientContext.conn.open&&clientContext.playerId){
+            clientContext.conn.send({type:'tileFlip'});
+            clientTileFlipBtnEl.disabled=true;
+          }
+        };
+      }
+      if(clientTileOkBtnEl){
+        clientTileOkBtnEl.onclick=()=>{
+          if(clientContext.conn&&clientContext.conn.open&&clientContext.playerId){
+            clientContext.conn.send({type:'tileDone'});
+          }
+        };
+      }
+      if(clientCardFlipBtnEl){
+        clientCardFlipBtnEl.onclick=()=>{
+          if(clientContext.conn&&clientContext.conn.open&&clientContext.playerId){
+            clientContext.conn.send({type:'cardFlip'});
+            clientCardFlipBtnEl.disabled=true;
+          }
+        };
+      }
+      if(clientCardOkBtnEl){
+        clientCardOkBtnEl.onclick=()=>{
+          if(clientContext.conn&&clientContext.conn.open&&clientContext.playerId){
+            clientContext.conn.send({type:'cardDone'});
+          }
+        };
+      }
     }
 
     function handleHostMessage(msg){
@@ -996,6 +1370,8 @@
           if(clientJoinCardEl) clientJoinCardEl.style.display='block';
           if(clientJoinBtnEl) clientJoinBtnEl.disabled=false;
           if(clientControlsEl) clientControlsEl.style.display='none';
+          if(clientTileModalEl) clientTileModalEl.style.display='none';
+          if(clientCardModalEl) clientCardModalEl.style.display='none';
           showClientMessage('你已被移出遊戲，可重新加入。','error');
           break;
         default:
