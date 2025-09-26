@@ -16,10 +16,12 @@
       --c-danger:#FF5E5E; --b-danger:#a33a3a; --g-danger:linear-gradient(180deg,#4a1010,#2a0808);
     }
     html,body{height:100%;margin:0;background:#0e1420;color:var(--text);font-family:ui-sans-serif,system-ui,"Segoe UI",Noto Sans,Arial;overflow:auto}
+
     body.host-mode{overflow:hidden}
 
     .app{min-height:100%;display:grid;grid-template-rows:56px 1fr;gap:8px;padding:10px}
     body.host-mode .app{height:100vh}
+
     .top{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:12px;padding:0 10px}
     .top .row{flex-wrap:wrap;justify-content:flex-end}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800}
@@ -54,6 +56,7 @@
     .client-list{display:grid;gap:6px}
     .client-list .item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;background:rgba(26,36,56,.6)}
     .client-list .item .player-avatar{width:32px;height:32px}
+
     input,select,textarea{background:#0f1624;border:1px solid #2c3f60;color:var(--text);border-radius:10px;padding:8px}
 
     .client-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.65);z-index:70}
@@ -62,6 +65,7 @@
     .client-overlay .face{border:0;background:transparent}
 
     .meter{background:#0b1220;border-radius:8px;border:1px solid #2b3952;height:8px;width:120px;position:relative;overflow:hidden}
+
     .meter span{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#77c6ff,#b282ff)}
 
     .board-wrap{position:relative;display:grid;place-items:center;height:100%}
@@ -125,11 +129,13 @@
       .grid{grid-template-columns:1fr;grid-template-rows:auto auto auto}
       .hud{position:static;right:auto;bottom:auto}
       .app{grid-template-rows:auto auto 1fr}
+
       body.host-mode{overflow:auto}
       body.host-mode .app{height:auto}
       body.host-mode .pane{overflow:auto}
       body.host-mode #playersPane{display:block}
       body.host-mode #playerList{overflow:visible;padding-right:0}
+
     }
     @media (max-width:900px){
       .board{width:100%;max-width:100%;aspect-ratio:1/1}
@@ -161,6 +167,7 @@
     <div class="grid">
       <div class="pane" id="playersPane">
         <div class="title">玩家</div>
+
         <div class="card">
           <div class="row"><input id="playerName" placeholder="玩家名稱，例如：小明"><button class="btn" id="addPlayer">加入</button></div>
           <div class="row"><button class="btn" id="quick2">快速 2 人</button><button class="btn" id="quick4">快速 4 人</button></div>
@@ -284,7 +291,6 @@
         </div>
       </div>
     </div>
-
     <div class="hud">
       <div class="panel">
         <div class="row"><div class="dice" id="dice">–</div><button class="btn" id="roll">擲骰</button><button class="btn" id="endTurn">結束回合</button><button class="btn" id="undoBtn">回上一步</button></div>
