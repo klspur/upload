@@ -16,12 +16,10 @@
       --c-danger:#FF5E5E; --b-danger:#a33a3a; --g-danger:linear-gradient(180deg,#4a1010,#2a0808);
     }
     html,body{height:100%;margin:0;background:#0e1420;color:var(--text);font-family:ui-sans-serif,system-ui,"Segoe UI",Noto Sans,Arial;overflow:auto}
-
     body.host-mode{overflow:hidden}
 
     .app{min-height:100%;display:grid;grid-template-rows:56px 1fr;gap:8px;padding:10px}
     body.host-mode .app{height:100vh}
-
     .top{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:12px;padding:0 10px}
     .top .row{flex-wrap:wrap;justify-content:flex-end}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800}
@@ -43,7 +41,14 @@
     .player-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.2);box-shadow:0 0 0 2px rgba(0,0,0,.35)}
     .player-dot{width:16px;height:16px;border-radius:999px;border:2px solid rgba(255,255,255,.7)}
     .remote-tag{font-size:11px;color:var(--accent);margin-left:auto}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .card-header .title{margin-bottom:0}
+    .btn.ghost{background:transparent;border-color:rgba(255,255,255,.25)}
+    .btn.danger{background:#9d2d2d;border-color:#c45353}
     .remote-info{display:grid;gap:8px;text-align:center}
+    #remoteJoinCard .collapse-hint{display:none;font-size:13px;color:var(--muted);margin-bottom:6px;cursor:pointer}
+    #remoteJoinCard.collapsed .remote-info{display:none}
+    #remoteJoinCard.collapsed .collapse-hint{display:block}
     .remote-info canvas{margin:0 auto;border-radius:12px;background:#fff;padding:10px}
     .link{color:var(--accent);word-break:break-all}
     .copy-btn{align-self:center}
@@ -56,7 +61,6 @@
     .client-list{display:grid;gap:6px}
     .client-list .item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;background:rgba(26,36,56,.6)}
     .client-list .item .player-avatar{width:32px;height:32px}
-
     input,select,textarea{background:#0f1624;border:1px solid #2c3f60;color:var(--text);border-radius:10px;padding:8px}
 
     .client-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.65);z-index:70}
@@ -65,7 +69,6 @@
     .client-overlay .face{border:0;background:transparent}
 
     .meter{background:#0b1220;border-radius:8px;border:1px solid #2b3952;height:8px;width:120px;position:relative;overflow:hidden}
-
     .meter span{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#77c6ff,#b282ff)}
 
     .board-wrap{position:relative;display:grid;place-items:center;height:100%}
@@ -93,7 +96,9 @@
     .brandmark{font-weight:900;font-size:28px;letter-spacing:2px}
     .slogan{font-size:12px;color:var(--muted);margin-top:6px}
 
-    .pawn{position:absolute;width:20px;height:20px;border-radius:999px;border:3px solid #fff;box-sizing:content-box;transform:translate(-50%,-50%);transition:transform .3s ease;z-index:10}
+    .pawn{position:absolute;width:24px;height:24px;border-radius:999px;border:3px solid #fff;box-sizing:content-box;transform:translate(-50%,-50%);transition:transform .3s ease;z-index:10;overflow:hidden;display:grid;place-items:center;background:#fff}
+    .pawn.has-avatar{border-color:rgba(255,255,255,.7);background:#0f1624}
+    .pawn img{width:100%;height:100%;object-fit:cover;border-radius:50%}
     .active{outline:2px solid var(--accent);box-shadow:0 0 0 4px rgba(138,198,255,.15)}
 
     .hud{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:60}
@@ -129,13 +134,11 @@
       .grid{grid-template-columns:1fr;grid-template-rows:auto auto auto}
       .hud{position:static;right:auto;bottom:auto}
       .app{grid-template-rows:auto auto 1fr}
-
       body.host-mode{overflow:auto}
       body.host-mode .app{height:auto}
       body.host-mode .pane{overflow:auto}
       body.host-mode #playersPane{display:block}
       body.host-mode #playerList{overflow:visible;padding-right:0}
-
     }
     @media (max-width:900px){
       .board{width:100%;max-width:100%;aspect-ratio:1/1}
@@ -167,14 +170,17 @@
     <div class="grid">
       <div class="pane" id="playersPane">
         <div class="title">玩家</div>
-
         <div class="card">
           <div class="row"><input id="playerName" placeholder="玩家名稱，例如：小明"><button class="btn" id="addPlayer">加入</button></div>
           <div class="row"><button class="btn" id="quick2">快速 2 人</button><button class="btn" id="quick4">快速 4 人</button></div>
         </div>
         <div class="card" id="remoteJoinCard">
-          <div class="title">手機加入</div>
-          <div class="remote-info">
+          <div class="card-header">
+            <div class="title">手機加入</div>
+            <button class="btn ghost" id="remoteJoinToggle" type="button">縮小</button>
+          </div>
+          <div class="collapse-hint" id="remoteCollapsedHint">已收合，點擊「展開」顯示 QR Code 與加入連結</div>
+          <div class="remote-info" id="remoteJoinContent">
             <div>房間代碼：<b id="roomCode">—</b></div>
             <canvas id="joinQR" width="200" height="200"></canvas>
             <a class="link" id="joinUrl" target="_blank" rel="noopener"></a>
@@ -221,6 +227,29 @@
           <button class="btn" id="clientJoinBtn" type="button">加入</button>
         </div>
         <div class="hint">可上傳個人大頭貼（建議小於 5 MB）。</div>
+      </div>
+      <div class="card" id="clientAdminCard">
+        <div class="title">管理員登入</div>
+        <div class="list">
+          <input type="password" id="clientAdminPassword" placeholder="輸入管理員密碼">
+          <button class="btn" id="clientAdminLoginBtn" type="button">登入管理員</button>
+        </div>
+        <div class="hint" id="clientAdminStatus">僅供開發者維護使用。</div>
+      </div>
+      <div class="card" id="clientAdminControls" style="display:none">
+        <div class="title">管理員控制台</div>
+        <div class="list">
+          <div class="row" style="flex-wrap:wrap;gap:8px">
+            <button class="btn" data-admin-action="roll" type="button">擲骰</button>
+            <button class="btn" data-admin-action="endTurn" type="button">結束回合</button>
+            <button class="btn" data-admin-action="undo" type="button">回上一步</button>
+          </div>
+          <label class="row" style="gap:8px;align-items:center">
+            <input type="checkbox" id="clientAdminAutoNext">
+            自動換人
+          </label>
+          <button class="btn danger" data-admin-action="reset" type="button">重新開局</button>
+        </div>
       </div>
       <div class="card" id="clientControls" style="display:none">
         <div class="title">行動操控</div>
@@ -291,6 +320,7 @@
         </div>
       </div>
     </div>
+
     <div class="hud">
       <div class="panel">
         <div class="row"><div class="dice" id="dice">–</div><button class="btn" id="roll">擲骰</button><button class="btn" id="endTurn">結束回合</button><button class="btn" id="undoBtn">回上一步</button></div>
@@ -394,10 +424,16 @@
     let pendingTileOnOk = null;
     let pendingCardOnDone = null;
     const clientContext = { peer:null, conn:null, joined:false, playerId:null };
-    let remoteStatusEl=null, joinUrlEl=null, roomCodeEl=null, joinQrCanvas=null, copyJoinBtn=null;
+    const ADMIN_PASSWORD='980618';
+    const adminConnections=new Set();
+    let remoteStatusEl=null, joinUrlEl=null, roomCodeEl=null, joinQrCanvas=null, copyJoinBtn=null, remoteJoinCardEl=null, remoteJoinToggleBtn=null, remoteJoinContentEl=null, remoteCollapsedHintEl=null;
+    let remoteJoinCollapsed=false;
     let clientStatusEl=null, clientMessageEl=null, clientJoinCardEl=null, clientControlsEl=null, clientPlayersEl=null, clientLogEl=null, clientRollBtn=null, clientEndBtn=null, clientTurnNameEl=null, clientPosEl=null, clientDiceInfoEl=null, clientPlayersCardEl=null, clientLogCardEl=null, clientJoinBtnEl=null, clientNameInputEl=null, clientAvatarInputEl=null;
     let clientTileModalEl=null, clientTileFlipWrapEl=null, clientTileFlipBtnEl=null, clientTileOkBtnEl=null, clientTileTitleEl=null, clientTileTypeEl=null, clientTileDescEl=null, clientTileHintEl=null, clientTileControllerHintEl=null;
     let clientCardModalEl=null, clientCardFlipWrapEl=null, clientCardFlipBtnEl=null, clientCardOkBtnEl=null, clientCardDeckEl=null, clientCardTextEl=null, clientCardHintEl=null, clientCardControllerHintEl=null;
+    let clientAdminCardEl=null, clientAdminPasswordInputEl=null, clientAdminLoginBtnEl=null, clientAdminStatusEl=null, clientAdminControlsEl=null, clientAdminAutoNextEl=null;
+    let clientAdminActionBtns=[];
+    const clientAdminState={granted:false};
 
     const ICE_SERVERS=[
       {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302','stun:stun3.l.google.com:19302']},
@@ -425,7 +461,16 @@
       if(!peerInstance){ if(!remoteStatusEl.textContent) remoteStatusEl.textContent='行動加入功能準備中…'; return; }
       const deviceCount = Array.from(peerConnections).filter(c=>c.open).length;
       const joinedCount = playerConnections.size;
-      remoteStatusEl.textContent = `已連線裝置：${deviceCount} · 已加入玩家：${joinedCount}`;
+      const adminCount = Array.from(adminConnections).filter(c=>c.open).length;
+      remoteStatusEl.textContent = `已連線裝置：${deviceCount} · 已加入玩家：${joinedCount} · 管理員：${adminCount}`;
+    }
+
+    function setRemoteJoinCollapsed(collapsed){
+      remoteJoinCollapsed=!!collapsed;
+      if(remoteJoinCardEl) remoteJoinCardEl.classList.toggle('collapsed',remoteJoinCollapsed);
+      if(remoteJoinContentEl) remoteJoinContentEl.style.display=remoteJoinCollapsed?'none':'grid';
+      if(remoteCollapsedHintEl) remoteCollapsedHintEl.style.display=remoteJoinCollapsed?'block':'none';
+      if(remoteJoinToggleBtn) remoteJoinToggleBtn.textContent=remoteJoinCollapsed?'展開':'縮小';
     }
 
     function getPublicState(){
@@ -441,6 +486,9 @@
         control: {
           tile: controlState.tile ? {...controlState.tile} : null,
           card: controlState.card ? {...controlState.card} : null
+        },
+        settings:{
+          autoNext: !!($('#autoNext') && $('#autoNext').checked)
         }
       };
     }
@@ -633,7 +681,29 @@
       });
     }
 
-    function placePawns(){ document.querySelectorAll('.pawn').forEach(n=>n.remove()); state.players.forEach(p=>{ const tile=tileEls[p.pos]; if(!tile) return; const rect=tile.getBoundingClientRect(), boardRect=board.getBoundingClientRect(); const x=rect.left-boardRect.left+rect.width/2, y=rect.top-boardRect.top+rect.height/2; const pa=el('div','pawn'); pa.style.background=p.color; pa.style.transform=`translate(${x}px, ${y}px)`; board.appendChild(pa); p.pawn=pa; }); }
+    function placePawns(){
+      document.querySelectorAll('.pawn').forEach(n=>n.remove());
+      state.players.forEach(p=>{
+        const tile=tileEls[p.pos];
+        if(!tile) return;
+        const rect=tile.getBoundingClientRect(), boardRect=board.getBoundingClientRect();
+        const x=rect.left-boardRect.left+rect.width/2, y=rect.top-boardRect.top+rect.height/2;
+        const pawnEl=el('div','pawn');
+        pawnEl.style.borderColor=p.color;
+        if(p.avatar){
+          pawnEl.classList.add('has-avatar');
+          const img=el('img');
+          img.src=p.avatar;
+          img.alt=p.name;
+          pawnEl.appendChild(img);
+        } else {
+          pawnEl.style.background=p.color;
+        }
+        pawnEl.style.transform=`translate(${x}px, ${y}px)`;
+        board.appendChild(pawnEl);
+        p.pawn=pawnEl;
+      });
+    }
     window.addEventListener('resize', placePawns);
 
     function refreshTurnInfo(){ if(state.players.length===0){ $('#turnName').textContent='—'; $('#turnPos').textContent='0'; return;} const p=state.players[state.turn%state.players.length]; $('#turnName').textContent=p.name; $('#turnPos').textContent=p.pos; $('#guardHint').textContent = state.waitingEnd ? '請先「結束回合」再由下一位擲骰。' : ''; renderPlayers(); }
@@ -825,6 +895,7 @@
     function refreshPawn(){ placePawns(); refreshTurnInfo(); }
     function getRing28(){ const pad = {t:'空地',type:'normal',desc:''}; const ring = cfg.tiles.slice(0,28); while(ring.length<28) ring.push({...pad}); return ring }
 
+
     function openCard(type, onDone){
       const label = type==='chance' ? '機會卡' : (type==='destiny' ? '命運卡' : '遊戲卡');
       const active=state.players[state.turn]||null;
@@ -886,6 +957,17 @@
       roomCodeEl=$('#roomCode');
       joinQrCanvas=$('#joinQR');
       copyJoinBtn=$('#copyJoinLink');
+      remoteJoinCardEl=$('#remoteJoinCard');
+      remoteJoinToggleBtn=$('#remoteJoinToggle');
+      remoteJoinContentEl=$('#remoteJoinContent');
+      remoteCollapsedHintEl=$('#remoteCollapsedHint');
+      setRemoteJoinCollapsed(false);
+      if(remoteJoinToggleBtn){
+        remoteJoinToggleBtn.onclick=()=>setRemoteJoinCollapsed(!remoteJoinCollapsed);
+      }
+      if(remoteCollapsedHintEl){
+        remoteCollapsedHintEl.onclick=()=>setRemoteJoinCollapsed(false);
+      }
       if(!remoteStatusEl) return;
       if(!window.Peer){
         remoteStatusEl.textContent='行動加入功能無法啟用（PeerJS 未載入）';
@@ -945,6 +1027,7 @@
               player.avatar=data.avatar||player.avatar;
               player.name=name;
               renderPlayers();
+              placePawns();
               refreshTurnInfo();
               updateControls();
               syncState();
@@ -1004,6 +1087,76 @@
             }
           }
           break;
+        case 'adminLogin':{
+          const password=(data.password||'').toString();
+          if(password===ADMIN_PASSWORD){
+            conn.isAdmin=true;
+            adminConnections.add(conn);
+            conn.send({type:'admin',status:'granted'});
+            try{ conn.send({type:'state',payload:getPublicState()}); }catch(err){ console.warn(err); }
+          } else {
+            conn.isAdmin=false;
+            adminConnections.delete(conn);
+            conn.send({type:'admin',status:'denied',message:'密碼錯誤'});
+          }
+          updateRemoteStatus();
+          break;
+        }
+        case 'adminAction':{
+          if(!conn.isAdmin){
+            conn.send({type:'admin',status:'denied',message:'尚未通過管理員驗證'});
+            break;
+          }
+          const action=data.action;
+          let success=false;
+          let handled=true;
+          let infoMessage='';
+          switch(action){
+            case 'roll':
+              success=!!roll({fromRemote:true});
+              if(!success) infoMessage='目前無法擲骰，請確認是否尚有事件進行中。';
+              break;
+            case 'endTurn':
+              if(state.waitingEnd){
+                nextTurn();
+                success=true;
+              } else {
+                infoMessage='尚未進入結束回合階段。';
+                log('管理員請求結束回合，但目前尚未進入結束階段。');
+              }
+              break;
+            case 'undo':
+              if(H.length>0){
+                undo();
+                success=true;
+              } else {
+                infoMessage='目前沒有可回復的步驟。';
+              }
+              break;
+            case 'setAutoNext':
+              if($('#autoNext')) $('#autoNext').checked=!!data.value;
+              updateControls();
+              syncState();
+              success=true;
+              break;
+            case 'reset':
+              log('管理員遠端重設遊戲。');
+              if(conn.open){ conn.send({type:'admin',status:'ok',action:'reset'}); }
+              location.reload();
+              return;
+            default:
+              handled=false;
+              break;
+          }
+          if(conn.open && handled){
+            if(success){
+              conn.send({type:'admin',status:'ok',action, value:data.value});
+            } else {
+              conn.send({type:'admin',status:'info',action,message:infoMessage||'無法執行指令'});
+            }
+          }
+          break;
+        }
         default:
           break;
       }
@@ -1011,6 +1164,10 @@
 
     function handleClientDisconnect(conn){
       peerConnections.delete(conn);
+      if(conn.isAdmin){
+        adminConnections.delete(conn);
+        conn.isAdmin=false;
+      }
       if(conn.playerId){
         const idx=state.players.findIndex(p=>p.id===conn.playerId);
         if(idx>=0){
@@ -1066,11 +1223,19 @@
       clientCardTextEl=$('#clientCardText');
       clientCardHintEl=$('#clientCardHint');
       clientCardControllerHintEl=$('#clientCardControllerHint');
+      clientAdminCardEl=$('#clientAdminCard');
+      clientAdminPasswordInputEl=$('#clientAdminPassword');
+      clientAdminLoginBtnEl=$('#clientAdminLoginBtn');
+      clientAdminStatusEl=$('#clientAdminStatus');
+      clientAdminControlsEl=$('#clientAdminControls');
+      clientAdminAutoNextEl=$('#clientAdminAutoNext');
+      clientAdminActionBtns=Array.from(document.querySelectorAll('[data-admin-action]'));
       if(clientControlsEl) clientControlsEl.style.display='none';
       if(clientRollBtn) clientRollBtn.disabled=true;
       if(clientEndBtn) clientEndBtn.disabled=true;
       if(clientTileModalEl) clientTileModalEl.style.display='none';
       if(clientCardModalEl) clientCardModalEl.style.display='none';
+      resetClientAdmin();
       const roomLabel=$('#clientRoomCode');
       roomId=(code||'').toString().toUpperCase();
       if(roomLabel) roomLabel.textContent=roomId||'—';
@@ -1100,6 +1265,7 @@
           if(clientControlsEl) clientControlsEl.style.display='none';
           if(clientTileModalEl) clientTileModalEl.style.display='none';
           if(clientCardModalEl) clientCardModalEl.style.display='none';
+          resetClientAdmin();
           showClientMessage('');
         });
         conn.on('error',err=>{ if(clientStatusEl) clientStatusEl.textContent='連線錯誤：'+(err&&err.message?err.message:err); });
@@ -1112,6 +1278,20 @@
       if(!clientMessageEl) return;
       clientMessageEl.textContent=text||'';
       clientMessageEl.style.color=type==='error'?'#ff9b9b':'var(--muted)';
+    }
+
+    function showAdminStatus(text,type='info'){
+      if(!clientAdminStatusEl) return;
+      clientAdminStatusEl.textContent=text||'';
+      clientAdminStatusEl.style.color=type==='error'?'#ff9b9b':'var(--muted)';
+    }
+
+    function resetClientAdmin(){
+      clientAdminState.granted=false;
+      if(clientAdminControlsEl) clientAdminControlsEl.style.display='none';
+      if(clientAdminLoginBtnEl) clientAdminLoginBtnEl.disabled=false;
+      if(clientAdminPasswordInputEl) clientAdminPasswordInputEl.value='';
+      showAdminStatus('僅供開發者維護使用。','info');
     }
 
     function updateClientControl(data){
@@ -1237,6 +1417,12 @@
         (data.logs||[]).forEach(msg=>{ const item=el('div','',msg); clientLogEl.appendChild(item); });
         if(clientLogCardEl) clientLogCardEl.style.display=(data.logs&&data.logs.length)?'block':'none';
       }
+      if(clientAdminAutoNextEl && data.settings){
+        const desired=!!data.settings.autoNext;
+        if(clientAdminAutoNextEl.checked!==desired){
+          clientAdminAutoNextEl.checked=desired;
+        }
+      }
       updateClientControl(data);
       const me=data.players.find(p=>p.id===clientContext.playerId);
       if(clientPosEl) clientPosEl.textContent=me?me.pos:'—';
@@ -1340,6 +1526,39 @@
           }
         };
       }
+      if(clientAdminLoginBtnEl){
+        clientAdminLoginBtnEl.onclick=()=>{
+          if(!clientContext.conn||!clientContext.conn.open){ showAdminStatus('尚未與主機連線','error'); return; }
+          const pwd=clientAdminPasswordInputEl?clientAdminPasswordInputEl.value:'';
+          if(!pwd){ showAdminStatus('請輸入管理員密碼','error'); return; }
+          clientAdminLoginBtnEl.disabled=true;
+          showAdminStatus('驗證中…');
+          clientContext.conn.send({type:'adminLogin',password:pwd});
+        };
+      }
+      if(clientAdminAutoNextEl){
+        clientAdminAutoNextEl.onchange=()=>{
+          if(!clientAdminState.granted||!clientContext.conn||!clientContext.conn.open){
+            clientAdminAutoNextEl.checked=!clientAdminAutoNextEl.checked;
+            showAdminStatus('尚未取得管理員權限','error');
+            return;
+          }
+          clientContext.conn.send({type:'adminAction',action:'setAutoNext',value:clientAdminAutoNextEl.checked});
+        };
+      }
+      if(clientAdminActionBtns.length){
+        clientAdminActionBtns.forEach(btn=>{
+          btn.onclick=()=>{
+            if(!clientAdminState.granted){ showAdminStatus('尚未取得管理員權限','error'); return; }
+            if(!clientContext.conn||!clientContext.conn.open){ showAdminStatus('尚未與主機連線','error'); return; }
+            const action=btn.getAttribute('data-admin-action');
+            if(action==='reset'){
+              showAdminStatus('已送出重新開局指令，主機將重新整理。','info');
+            }
+            clientContext.conn.send({type:'adminAction',action});
+          };
+        });
+      }
     }
 
     function handleHostMessage(msg){
@@ -1373,6 +1592,32 @@
           if(clientTileModalEl) clientTileModalEl.style.display='none';
           if(clientCardModalEl) clientCardModalEl.style.display='none';
           showClientMessage('你已被移出遊戲，可重新加入。','error');
+          break;
+        case 'admin':
+          if(msg.status==='granted'){
+            clientAdminState.granted=true;
+            if(clientAdminControlsEl) clientAdminControlsEl.style.display='block';
+            if(clientAdminLoginBtnEl) clientAdminLoginBtnEl.disabled=true;
+            if(clientAdminPasswordInputEl) clientAdminPasswordInputEl.value='';
+            showAdminStatus('已取得管理員權限。','info');
+          }else if(msg.status==='denied'){
+            clientAdminState.granted=false;
+            if(clientAdminLoginBtnEl) clientAdminLoginBtnEl.disabled=false;
+            if(clientAdminControlsEl) clientAdminControlsEl.style.display='none';
+            showAdminStatus(msg.message||'驗證失敗','error');
+          }else if(msg.status==='ok'){
+            if(msg.action==='setAutoNext' && typeof msg.value==='boolean' && clientAdminAutoNextEl){
+              clientAdminAutoNextEl.checked=msg.value;
+            }
+            if(msg.action!=='setAutoNext'){
+              showAdminStatus('指令已送達主機。','info');
+            }
+          }else if(msg.status==='info'){
+            if(msg.action==='setAutoNext' && typeof msg.value==='boolean' && clientAdminAutoNextEl){
+              clientAdminAutoNextEl.checked=msg.value;
+            }
+            showAdminStatus(msg.message||'目前無法執行指令','error');
+          }
           break;
         default:
           break;
