@@ -895,6 +895,7 @@
     function refreshPawn(){ placePawns(); refreshTurnInfo(); }
     function getRing28(){ const pad = {t:'空地',type:'normal',desc:''}; const ring = cfg.tiles.slice(0,28); while(ring.length<28) ring.push({...pad}); return ring }
 
+
     function openCard(type, onDone){
       const label = type==='chance' ? '機會卡' : (type==='destiny' ? '命運卡' : '遊戲卡');
       const active=state.players[state.turn]||null;
